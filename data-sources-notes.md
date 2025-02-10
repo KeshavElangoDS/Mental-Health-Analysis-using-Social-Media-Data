@@ -41,3 +41,22 @@ Mental Health Analysis Using Social Media Data - natural language processing and
         * Size: Potentially millions of posts.
         * Access: Use Instagram Graph API to scrape data.
 
+Latest data sources under consideration:
+
+Data sources
+
+1. Reddit SuicideWatch and Mental Health Collection (SWMH) for Suicidal Ideation and Mental Disorder Detection
+Creators
+* Shaoxiong Ji1 Xue Li1 Zi Huang1 Erik Cambria2
+
+https://zenodo.org/records/6476179
+
+2. Participant Behavior and Community Response in Online Mental Health Communities: Insights from Reddit Virginia Morinia,b,∗, Maria Sansonic, Giulio Rossettib, Dino Pedreschia and Carlos Castillod,e
+
+Reddit Mental Health Dataset
+Creators
+* Low, Daniel M.1 Rumker, Laurie2 Talker, Tanya3 Torous, John4 Cecchi, Guillermo5 Ghosh, Satrajit S.6
+
+https://zenodo.org/records/3941387
+
+3. https://jina-kim.github.io/dataset/20srep-mental

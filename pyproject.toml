@@ -1,0 +1,32 @@
+[tool.poetry]
+name="mentalhealth"
+version="0.1.0"
+description = "Template for Mental Health Analysis project."
+authors = ["Keshav Elango <144287174+KeshavElangoDS@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+numpy = "^2.1.1"
+matplotlib = "^3.9.2"
+notebook = "^7.2.2"
+ipython = "^8.27.0"
+ipympl = "^0.9.4"
+scikit-learn = "^1.5.2"
+pandas = "^2.2.3"
+seaborn = "^0.13.2"
+scipy = "^1.14.1"
+black = "^24.10.0"
+spacy = "^3.8.4"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.8.0"
+mypy = "^1.11.2"
+mypy-extensions = "^1.0.0"
+isort = "^5.13.2"
+flake8 = "^7.1.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -2,3 +2,6 @@
 # Relative file path to ignore git tracking
 data-cleaning-1.ipynb
 reddit_mental_health_data
+mental_health_data.csv
+tokenized_and_lemmatized_train_data.parquet
+tokenized_and_lemmatized_test_data.parquet

@@ -6,12 +6,9 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
-# from concurrent.futures import ProcessPoolExecutor
 import re
 
-import pickle
 from skl2onnx import convert_sklearn
-from onnxmltools.convert import convert_lightgbm
 from skl2onnx.common.data_types import FloatTensorType
 import onnxmltools
 
@@ -90,18 +87,11 @@ def save_model(model, save_as, model_filename, X_train):
             print(f"Model saved as ONNX at {model_filename}")
 
         elif isinstance(model, lgb.LGBMClassifier):  # For LightGBM models
-            # Convert LightGBM model to ONNX format
             # Save model to a file
             booster = model.booster_
             
             # Save the Booster model to a file
             booster.save_model(model_filename)
-
-            # # Load the model back
-            # loaded_model = lgb.Booster(model_file='lightgbm_model.txt')
-
-            # # Predict using the loaded model
-            # y_pred = loaded_model.predict(X_test)
         
         else:
             # Handle other model types, e.g., for scikit-learn models
@@ -109,20 +99,6 @@ def save_model(model, save_as, model_filename, X_train):
             with open(model_filename, 'wb') as f:
                 f.write(onnx_model.SerializeToString())
             print(f"Model saved as ONNX at {model_filename}")
-
-# # Function to save the model in the specified format
-# def save_model(model, save_as, model_filename, X_train):
-#     if save_as == 'pickle':
-#         with open(model_filename, 'wb') as f:
-#             pickle.dump(model, f)
-#         print(f"Model saved as Pickle at {model_filename}")
-#     elif save_as == 'onnx':
-#         onnx_model = convert_sklearn(model, initial_types=[('input', FloatTensorType([None, X_train.shape[1]]))])
-#         with open(model_filename, 'wb') as f:
-#             f.write(onnx_model.SerializeToString())
-#         print(f"Model saved as ONNX at {model_filename}")
-#     else:
-#         raise ValueError(f"Save format {save_as} is not supported.")
 
 def train_and_evaluate_model(X_train, y_train, X_test, y_test, model_type='logistic'):
     # Preprocess training and testing data (removing digits and unwanted tokens)

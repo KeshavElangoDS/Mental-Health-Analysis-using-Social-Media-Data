@@ -17,6 +17,13 @@ import xgboost as xgb
 from sklearn.naive_bayes import MultinomialNB
 import lightgbm as lgb
 
+import torch
+from torch.utils.data import DataLoader, TensorDataset
+from torch.optim import AdamW
+from sklearn.model_selection import train_test_split
+
+from transformers import BertTokenizer, BertForSequenceClassification
+
 # Function to apply TF-IDF for feature extraction
 def extract_tfidf_features(text_data, max_features=5000):
     if isinstance(text_data, np.ndarray):
@@ -109,6 +116,8 @@ def train_and_evaluate_model(X_train, y_train, X_test, y_test, model_type='logis
     X_train_tfidf, tfidf_vectorizer = extract_tfidf_features(X_train)
     X_test_tfidf = tfidf_vectorizer.transform(X_test)
 
+    target_names = np.unique(y_train)
+
     # Select model based on the model_type argument
     if model_type == 'logistic':
         model = train_logistic_model(X_train_tfidf, y_train)
@@ -138,7 +147,10 @@ def train_and_evaluate_model(X_train, y_train, X_test, y_test, model_type='logis
     else:
         y_pred = y_pred_encoded
 
-    return y_test, y_pred, model_name
+    # Predict probabilities (added as ypred_proba)
+    ypred_proba = model.predict_proba(X_test_tfidf)
+
+    return y_test, y_pred, ypred_proba, model_name, target_names
 
 
 # Function to display performance metrics
@@ -156,3 +168,141 @@ def display_performance_metrics(y_test, y_pred, model_name):
     return metrics
 
 
+
+def tokenize_bert_batch(texts, tokenizer, batch_size=32, max_length=128):
+    """
+    Tokenize the text data into input_ids and attention masks for BERT.
+    Ensure uniform padding and truncation.
+    """
+    input_ids = []
+    attention_masks = []
+    
+    for i in range(0, len(texts), batch_size):
+        batch_texts = texts[i:i + batch_size]
+        
+        # Tokenizing with padding and truncation to max_length
+        encoded_batch = tokenizer(
+            batch_texts,
+            padding='max_length',  # Ensure padding to max_length
+            truncation=True,  # Truncate sequences longer than max_length
+            max_length=max_length,  # Limit the length of the sequences
+            return_tensors='pt'
+        )
+        
+        # Debugging: Check the shape of input_ids and attention_masks
+        print(f"Batch {i // batch_size}:")
+        print(f"  input_ids shape: {encoded_batch['input_ids'].shape}")
+        print(f"  attention_mask shape: {encoded_batch['attention_mask'].shape}")
+        
+        input_ids.append(encoded_batch['input_ids'])
+        attention_masks.append(encoded_batch['attention_mask'])
+    
+    # Concatenate the lists of input_ids and attention_masks
+    input_ids = torch.cat(input_ids, dim=0)
+    attention_masks = torch.cat(attention_masks, dim=0)
+    
+    return input_ids, attention_masks
+
+def prepare_bert_data(mental_health_df, tokenizer, batch_size=32):
+    """
+    Prepare the data for training by tokenizing the text and splitting into training and test sets.
+    """
+    texts, labels = mental_health_df['cleaned_post'].tolist(), mental_health_df['target'].tolist()
+
+    # Convert string labels to numeric labels
+    label_encoder = LabelEncoder()
+    labels = label_encoder.fit_transform(labels)  # Convert string labels to integers
+    
+    input_ids, attention_masks = tokenize_bert_batch(texts, tokenizer, batch_size)
+    
+    # Convert labels to tensors
+    labels_tensor = torch.tensor(labels)
+    
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(input_ids, labels_tensor, test_size=0.2, random_state=42)
+    
+    # Create PyTorch DataLoader
+    train_dataset = TensorDataset(X_train, attention_masks[:len(X_train)], y_train)
+    test_dataset = TensorDataset(X_test, attention_masks[len(X_train):], y_test)
+    
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    
+    return train_loader, test_loader, tokenizer, labels_tensor
+
+def load_bert_model(num_labels):
+    """
+    Load the pre-trained BERT model for sequence classification.
+    """
+    model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=num_labels)
+    return model
+
+def train_bert_model(model, train_loader, optimizer, device, epochs=3):
+    """
+    Train the BERT model for the specified number of epochs.
+    """
+    model.train()
+    for epoch in range(epochs):
+        for batch in train_loader:
+            batch_input_ids, batch_attention_masks, batch_labels = [b.to(device) for b in batch]
+            
+            optimizer.zero_grad()
+            
+            # Forward pass
+            outputs = model(input_ids=batch_input_ids, attention_mask=batch_attention_masks, labels=batch_labels)
+            
+            # Compute loss and backpropagate
+            loss = outputs.loss
+            loss.backward()
+            optimizer.step()
+        
+        print(f'Epoch {epoch+1} complete. Loss: {loss.item()}')
+
+def evaluate_bert_model(model, test_loader, device):
+    """
+    Evaluate the model on the test dataset.
+    """
+    model.eval()
+    predictions, true_labels = [], []
+    
+    with torch.no_grad():
+        for batch in test_loader:
+            batch_input_ids, batch_attention_masks, batch_labels = [b.to(device) for b in batch]
+            
+            # Forward pass
+            outputs = model(input_ids=batch_input_ids, attention_mask=batch_attention_masks)
+            
+            # Get predictions
+            logits = outputs.logits
+            preds = torch.argmax(logits, dim=1).cpu().numpy()
+            
+            predictions.extend(preds)
+            true_labels.extend(batch_labels.cpu().numpy())
+    
+    # Print classification metrics
+    print(classification_report(true_labels, predictions))
+
+def train_and_evaluate_bert_model(dataset_filepath):
+    """
+    """
+    mental_health_df = pd.read_csv(dataset_filepath)
+    
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    
+    train_loader, test_loader, tokenizer, labels_tensor = prepare_bert_data(mental_health_df, tokenizer)
+    
+    num_labels = len(set(labels_tensor))  # Number of unique classes
+    model = load_bert_model(num_labels)
+    
+    # Set up optimizer
+    optimizer = AdamW(model.parameters(), lr=1e-5)
+    
+    # Set up device (GPU if available)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.to(device)
+    
+    train_bert_model(model, train_loader, optimizer, device, epochs=3)
+    evaluate_bert_model(model, test_loader, device)
+    
+    model.save_pretrained('mental_health_bert_model')
+    tokenizer.save_pretrained('mental_health_bert_model')

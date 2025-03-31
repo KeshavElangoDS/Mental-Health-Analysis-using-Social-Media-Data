@@ -7,6 +7,10 @@ import seaborn as sns
 from wordcloud import WordCloud
 from wordcloud import STOPWORDS
 
+from sklearn.metrics import roc_curve, auc
+from sklearn.preprocessing import label_binarize
+import numpy as np
+
 def plot_post_counts_by_subreddit(data, column='subreddit', figsize=(15, 8)):
     """
     Plots the post counts across subreddits.
@@ -75,3 +79,37 @@ def generate_wordcloud(dataframe, text_column, width=800, height=400, background
     plt.axis('off')  # Turn off the axes
     plt.show()
 
+def plot_roc_curve_multiclass(y_test, ypred, classifier_name, target_names):
+    """
+    Plots the ROC curve for multiclass classification using One-vs-Rest strategy.
+    
+    Parameters:
+    - y_test: True labels (1D array or list of true labels)
+    - ypred: Predicted probabilities for each class (2D array or list)
+    - classifier_name: Name of the classifier to be shown in the plot legend
+    - target_names: List of the names of the target classes (e.g., ['Healthy', 'Depressed', 'Anxious'])
+    """
+    # Binarize the true labels for multiclass (One-vs-Rest strategy)
+    n_classes = len(np.unique(y_test))
+    y_test_bin = label_binarize(y_test, classes=np.unique(y_test))
+    
+    # Initialize dictionaries to store the ROC curve values for each class
+    fpr, tpr, roc_auc = {}, {}, {}
+    
+    # Compute the ROC curve for each class
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(y_test_bin[:, i], ypred[:, i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+    
+    # Plot ROC curves for each class
+    plt.figure(figsize=(8, 6))
+    for i in range(n_classes):
+        plt.plot(fpr[i], tpr[i], label=f'{target_names[i]} (AUC = {roc_auc[i]:.2f})')
+    
+    # Plot a random classifier line (diagonal line)
+    plt.plot([0, 1], [0, 1], color='gray', linestyle='--', label='Random Classifier')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(f'Receiver Operating Characteristic (ROC) Curve for {classifier_name}')
+    plt.legend(loc='lower right')
+    plt.show()

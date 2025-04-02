@@ -10,7 +10,6 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import numpy as np
 
-
 spacy_model = spacy.load('en_core_web_sm')
 
 # Natural Language Processing with Python and spaCy: A Practical Introduction by Yuli Vasiliev

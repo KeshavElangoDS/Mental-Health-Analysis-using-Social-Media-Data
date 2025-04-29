@@ -30,6 +30,13 @@ hummingbird-ml = "^0.4.12"
 transformers = "^4.50.3"
 torch = "^2.6.0"
 spacy = "^3.8.4"
+pytorch-lightning = "^2.5.1"
+onnxruntime = "^1.21.0"
+torchmetrics = "^1.7.1"
+imblearn = "^0.0"
+imbalanced-learn = "^0.13.0"
+shap = "^0.47.2"
+lime = "^0.2.0.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"

@@ -12,8 +12,6 @@ import numpy as np
 
 spacy_model = spacy.load('en_core_web_sm')
 
-# Natural Language Processing with Python and spaCy: A Practical Introduction by Yuli Vasiliev
-
 def text_statistics(df, text_column):
     total_words = 0
     total_sentences = 0

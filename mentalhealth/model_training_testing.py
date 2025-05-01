@@ -17,6 +17,7 @@ import xgboost as xgb
 from sklearn.naive_bayes import MultinomialNB
 import lightgbm as lgb
 
+import os, joblib
 
 # Function to apply TF-IDF for feature extraction
 def extract_tfidf_features(text_data, max_features=5000):
@@ -109,38 +110,42 @@ def train_and_evaluate_model(X_train, y_train, X_test, y_test, model_type='logis
     X_train_tfidf, tfidf_vectorizer = extract_tfidf_features(X_train)
     X_test_tfidf = tfidf_vectorizer.transform(X_test)
 
+    # Save the TF-IDF vectorizer
+    os.makedirs("model", exist_ok=True)
+    joblib.dump(tfidf_vectorizer, "model/tfidf_vectorizer.pkl")
+
     target_names = np.unique(y_train)
 
-    # Select model based on the model_type argument
+    # Model selection and training
     if model_type == 'logistic':
         model = train_logistic_model(X_train_tfidf, y_train)
         model_name = 'Logistic Regression'
-        model_filename = 'logistic_mental_health.onnx'
+        model_filename = 'model/logistic_mental_health.onnx'
     elif model_type == 'nb':
         model = train_nb_model(X_train_tfidf, y_train)
         model_name = 'Naive Bayes'
-        model_filename = 'nb_mental_health.onnx'
+        model_filename = 'model/nb_mental_health.onnx'
     elif model_type == 'xgb':
         model, label_encoder = train_xgb_model(X_train_tfidf, y_train)
         model_name = 'XGBoost'
-        model_filename = 'xgb_mental_health.onnx'
+        model_filename = 'model/xgb_mental_health.onnx'
+
+        # Save label encoder
+        joblib.dump(label_encoder, "model/xgb_label_encoder.pkl")
     elif model_type == 'lgbm':
         model = train_lgbm_model(X_train_tfidf, y_train, n_classes = len(y_train.unique()))
         model_name = 'LightGBM'
-        model_filename = 'lgbm_mental_health.onnx'
+        model_filename = 'model/lgbm_mental_health.onnx'
     else:
         raise ValueError(f"Unknown model type: {model_type}")
     
     save_model(model, 'onnx', model_filename, X_train_tfidf)
 
-    # Predict and decode the predictions back to original labels
+    # Predict and decode
     y_pred_encoded = model.predict(X_test_tfidf)
-    if model_type == 'xgb':
-        y_pred = label_encoder.inverse_transform(y_pred_encoded)
-    else:
-        y_pred = y_pred_encoded
+    y_pred = label_encoder.inverse_transform(y_pred_encoded) if model_type == 'xgb' else y_pred_encoded
 
-    # Predict probabilities (added as ypred_proba)
+    # Predict probabilities
     ypred_proba = model.predict_proba(X_test_tfidf)
 
     return y_test, y_pred, ypred_proba, model_name, target_names

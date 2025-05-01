@@ -9,7 +9,7 @@ from imblearn.over_sampling import RandomOverSampler
 from torch.utils.data import DataLoader, TensorDataset
 from torch.nn import CrossEntropyLoss
 from torch.optim import AdamW
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, get_scheduler, DataCollatorWithPadding
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, get_scheduler
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 import onnxruntime as ort
@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.metrics import roc_curve, auc
+import joblib
 
 # Suppress parallelism and warnings
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -199,6 +200,11 @@ def train_pipeline(
     evaluate_model(model.model, val_loader, label_encoder)
 
     plot_roc_auc(model, val_loader, label_encoder)
+
+    # Save tokenizer and label encoder for prediction use
+    tokenizer.save_pretrained("model/bert_tiny_tokenizer")
+    joblib.dump(label_encoder, "model/bert_tiny_label_encoder.pkl")
+    print("Tokenizer and label encoder saved.")
 
     return model, tokenizer, label_encoder
 

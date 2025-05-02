@@ -7,9 +7,29 @@ import os
 import sys
 import torch
 
+st.set_page_config(layout="wide", page_title=" Mental Health Text Classifier")
+
+st.markdown(
+    """
+    <style>
+        .block-container {
+            max-width: 95% !important;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        .css-1d391kg {
+            width: 300px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 from mentalhealth.predict_utils import (
     load_xgb_components, predict_with_xgb,
-    load_bert_components, predict_with_bert
+    load_bert_components, predict_with_bert,
+    load_reports, display_comparison,
+    display_auc_roc
 )
 
 def run_app():
@@ -41,6 +61,7 @@ def run_app():
     with st.sidebar:
         st.header("Model Settings")
         model_choice = st.radio("Select model:", ["BERT (Transformer)", "XGBoost (Traditional ML)"])
+        view_choice = st.sidebar.radio("Select view:", ["Prediction", "Model Comparison", "Class Distribution", "Word Cloud"])
 
     # --- User Input ---
     st.subheader("Enter a mental health-related message:")
@@ -91,8 +112,22 @@ def run_app():
 
             st.bar_chart(prob_df.set_index("Class"))
 
+    if view_choice == "Model Comparison":
+
+        st.header("ROC Comparison")
+        display_auc_roc()
+    
+    elif view_choice == "Class Distribution":
+
+        xgb_report, bert_report = load_reports()
+        display_comparison(xgb_report, bert_report)
+        
+    elif view_choice == "Word Cloud":
+        
+        pass
+
     st.markdown("---")
-    st.markdown("Made with ❤️ using BERT and XGBoost for mental health awareness.")
+    st.markdown("Made using BERT and XGBoost for mental health awareness.")
 
 
 # Run the Streamlit app directly

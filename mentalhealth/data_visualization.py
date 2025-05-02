@@ -3,6 +3,7 @@
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.express as px
 
 from wordcloud import WordCloud
 from wordcloud import STOPWORDS
@@ -10,6 +11,7 @@ from wordcloud import STOPWORDS
 from sklearn.metrics import roc_curve, auc
 from sklearn.preprocessing import label_binarize
 import numpy as np
+import pandas as pd
 
 def plot_post_counts_by_subreddit(data, column='subreddit', figsize=(15, 8)):
     """

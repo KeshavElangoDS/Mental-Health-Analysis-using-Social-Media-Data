@@ -6,6 +6,7 @@ import numpy as np
 import os
 import sys
 import torch
+from PIL import Image
 
 st.set_page_config(layout="wide", page_title=" Mental Health Text Classifier")
 
@@ -31,6 +32,15 @@ from mentalhealth.predict_utils import (
     load_reports, display_comparison,
     display_auc_roc
 )
+
+def display_wordcloud(class_name):
+    # Path to the pre-generated word clouds (This is a placeholder path, update as per your actual file locations)
+    wordcloud_path = os.path.join("wordclouds", f"WordCloud_{class_name}.png")
+    if os.path.exists(wordcloud_path):
+        img = Image.open(wordcloud_path)
+        st.image(img, caption=f"Word Cloud for {class_name}", use_container_width=True)
+    else:
+        st.error(f"No word cloud found for class: {class_name}")
 
 def run_app():
 
@@ -124,12 +134,20 @@ def run_app():
         
     elif view_choice == "Word Cloud":
         
-        pass
+                # Let users choose the class for the word cloud
+        classes = ['COVID19_support', 'EDAnonymous', 'Addiction', 'ADHD',
+       'alcoholism', 'Anxiety', 'Autism', 'Bipolar', 'bpd',
+       'depression', 'healthanxiety', 'Lonely', 'mentalhealth',
+       'PTSD', 'schizophrenia', 'socialanxiety',
+       'SuicideWatch']
+        
+        selected_class = st.selectbox("Select a class to view the word cloud", classes)
+        
+        display_wordcloud(selected_class)
 
     st.markdown("---")
     st.markdown("Made using BERT and XGBoost for mental health awareness.")
 
 
-# Run the Streamlit app directly
 if __name__ == "__main__":
     run_app()

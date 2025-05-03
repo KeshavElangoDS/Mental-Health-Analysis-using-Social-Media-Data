@@ -1,4 +1,27 @@
 """
+app.py : A Streamlit web application for classifying mental health-related text using 
+BERT (Transformer-based) and XGBoost (traditional ML) models.
+
+This application provides functionalities for:
+- Predicting the mental health category of user-provided text
+- Comparing model performance using ROC curves
+- Visualizing class distributions
+- Displaying word clouds for different mental health categories
+
+The models and vectorizers are preloaded from local paths and are used to generate
+predictions and visual insights.
+
+Modules imported include:
+- Streamlit for UI rendering
+- PIL for image handling
+- PyTorch and NumPy for tensor and array manipulations
+- Custom utilities for prediction and visualization
+
+Usage:
+------
+Run the script directly to launch the Streamlit app:
+    $ poetry run streamlit run mental_health_dashboard/app.py
+
 """
 import streamlit as st
 import pandas as pd
@@ -72,7 +95,39 @@ def run_app():
         st.header("Model Settings")
         model_choice = st.radio("Select model:", ["BERT (Transformer)", "XGBoost (Traditional ML)"])
         view_choice = st.sidebar.radio("Select view:", ["Prediction", "Model Comparison", "Class Distribution", "Word Cloud"])
-
+        
+        st.markdown("---")
+        with st.expander("Dataset Statistics"):
+            st.markdown("""
+            - **Total Words:** 198,807,402  
+            - **Unique Words:** 239,494  
+            - **Total Sentences:** 12,742,645  
+            - **Words Without Stopwords:** 77,943,241  
+            """)
+        
+        st.markdown("---")
+        with st.expander("🧩 Class Distribution"):
+            st.markdown("""
+            - **non_mental_health**: 634,489  
+            - **depression**: 117,331  
+            - **suicidewatch**: 66,161  
+            - **anxiety**: 57,671  
+            - **adhd**: 45,631  
+            - **mentalhealth**: 45,332  
+            - **bpd**: 24,294  
+            - **lonely**: 23,635  
+            - **socialanxiety**: 22,996  
+            - **EDAnonymous**: 14,577  
+            - **autism**: 8,869  
+            - **schizophrenia**: 8,712  
+            - **healthanxiety**: 8,648  
+            - **ptsd**: 8,643  
+            - **addiction**: 7,641  
+            - **alcoholism**: 5,911  
+            - **bipolarreddit**: 5,780  
+            - **COVID19_support**: 981  
+        """)
+            
     # --- User Input ---
     st.subheader("Enter a mental health-related message:")
     user_input = st.text_area("Text Input", placeholder="Type or paste text here...", height=200)
@@ -125,16 +180,77 @@ def run_app():
     if view_choice == "Model Comparison":
 
         st.header("ROC Comparison")
+        st.markdown("""
+        ### What is an ROC Curve?
+
+        - The **ROC (Receiver Operating Characteristic)** curve shows how well the model can distinguish between different mental health conditions.
+        - The curve plots **True Positive Rate (Sensitivity)** against **False Positive Rate** at various thresholds.
+        - A curve closer to the top-left means the model is better at making accurate predictions.
+
+        ### What is AUC?
+
+        - **AUC (Area Under the Curve)** ranges from 0 to 1.
+        - **1.0 means perfect prediction**; 0.5 means guessing at random.
+        - Higher AUC = Better performance for that class.
+
+        ### Model Summary:
+        - **BERT** usually performs slightly better because it understands text context deeply.
+        - **XGBoost** is faster and still performs very well, especially with structured data.
+
+        """)
         display_auc_roc()
     
     elif view_choice == "Class Distribution":
+        st.header("📊 Target Class Distribution")
+
+        class_counts = {
+            'non_mental_health': 634489,
+            'depression': 117331,
+            'suicidewatch': 66161,
+            'anxiety': 57671,
+            'adhd': 45631,
+            'mentalhealth': 45332,
+            'bpd': 24294,
+            'lonely': 23635,
+            'socialanxiety': 22996,
+            'EDAnonymous': 14577,
+            'autism': 8869,
+            'schizophrenia': 8712,
+            'healthanxiety': 8648,
+            'ptsd': 8643,
+            'addiction': 7641,
+            'alcoholism': 5911,
+            'bipolarreddit': 5780,
+            'COVID19_support': 981
+        }
+
+        class_df = pd.DataFrame.from_dict(class_counts, orient='index', columns=['Sample Count'])
+        class_df = class_df.sort_values("Sample Count", ascending=False)
+
+        st.bar_chart(class_df)
+
+        st.markdown("🔍 **Note:** The dataset is highly imbalanced. Larger class sizes like `non_mental_health` may influence prediction confidence and bias.")
 
         xgb_report, bert_report = load_reports()
         display_comparison(xgb_report, bert_report)
         
     elif view_choice == "Word Cloud":
+        st.header("🧠 Word Cloud for Mental Health Categories")
         
-                # Let users choose the class for the word cloud
+        # Professional, concise explanation of word clouds
+        st.markdown("""
+        ### Word Cloud Explanation
+
+        A **word cloud** is a visual representation of the most frequent words within a specific mental health category. The size of each word corresponds to its frequency—larger words appear more frequently in the text data.
+
+        ### How to Interpret the Word Cloud:
+        - **Larger words** indicate higher frequency, representing key themes or common terms associated with the condition.
+        - **Smaller words** are less frequent but still relevant to the category.
+        - **Color and placement** may vary, but the primary focus is on word size.
+
+        This tool helps to quickly identify the most relevant terms related to a particular mental health issue, offering insights into common discussions and symptoms.
+        """)
+
         classes = ['COVID19_support', 'EDAnonymous', 'Addiction', 'ADHD',
        'alcoholism', 'Anxiety', 'Autism', 'Bipolar', 'bpd',
        'depression', 'healthanxiety', 'Lonely', 'mentalhealth',

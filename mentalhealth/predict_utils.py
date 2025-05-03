@@ -1,4 +1,22 @@
 """
+predict_utils.py : Utility functions for loading models, making predictions, and visualizing performance 
+metrics for mental health classification using XGBoost and BERT models.
+
+This module provides functionality to:
+- Load ONNX models, tokenizers, and encoders
+- Predict classes and probabilities from text inputs
+- Clean and process model performance reports
+- Display comparison charts and ROC curves using Streamlit and Plotly
+
+Dependencies:
+    - numpy
+    - pandas
+    - joblib
+    - onnxruntime
+    - transformers
+    - plotly
+    - streamlit
+    - PIL (for image display)
 """
 
 import pandas as pd
@@ -24,12 +42,35 @@ torch.set_num_threads(1)
 
 
 def load_xgb_components(model_path="model/xgb_mental_health.onnx", vec_path="model/tfidf_vectorizer.pkl", enc_path="model/xgb_label_encoder.pkl"):
+    """
+    Loads the XGBoost model, TF-IDF vectorizer, and label encoder from disk.
+
+    Args:
+        model_path (str): Path to the ONNX XGBoost model file.
+        vec_path (str): Path to the pickled TF-IDF vectorizer.
+        enc_path (str): Path to the pickled label encoder.
+
+    Returns:
+        tuple: A tuple containing the ONNX inference session, TF-IDF vectorizer, and label encoder.
+    """
     session = ort.InferenceSession(model_path)
     vectorizer = joblib.load(vec_path)
     encoder = joblib.load(enc_path)
     return session, vectorizer, encoder
 
 def predict_with_xgb(texts, session, vectorizer, encoder):
+    """
+    Predicts mental health classes using the XGBoost ONNX model.
+
+    Args:
+        texts (str or List[str]): Input text(s) for classification.
+        session (onnxruntime.InferenceSession): Loaded ONNX model session.
+        vectorizer (TfidfVectorizer): TF-IDF vectorizer used to transform input texts.
+        encoder (LabelEncoder): Label encoder used to decode predicted class indices.
+
+    Returns:
+        tuple: Predicted class labels and their corresponding probabilities.
+    """
     texts = [texts] if isinstance(texts, str) else texts
     vectors = vectorizer.transform(texts)
     
@@ -58,6 +99,17 @@ def load_bert_components(
     tokenizer_path="model/bert_tokenizer",
     encoder_path="model/bert_label_encoder.pkl"
 ):
+    """
+    Loads the BERT model, tokenizer, and label encoder from disk.
+
+    Args:
+        model_path (str): Path to the ONNX BERT model file.
+        tokenizer_path (str): Directory path to the saved tokenizer.
+        encoder_path (str): Path to the pickled label encoder.
+
+    Returns:
+        tuple: A tuple containing the ONNX inference session, tokenizer, and label encoder.
+    """
     session = ort.InferenceSession(model_path)
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
     label_encoder = joblib.load(encoder_path)
@@ -65,6 +117,19 @@ def load_bert_components(
 
 # Prediction function for BERT
 def predict_with_bert(texts, session, tokenizer, label_encoder, max_len=128):
+    """
+    Predicts mental health classes using the BERT ONNX model.
+
+    Args:
+        texts (str or List[str]): Input text(s) for classification.
+        session (onnxruntime.InferenceSession): Loaded ONNX BERT model session.
+        tokenizer (AutoTokenizer): Tokenizer used for input encoding.
+        label_encoder (LabelEncoder): Label encoder used to decode predicted class indices.
+        max_len (int): Maximum token length for padding/truncation.
+
+    Returns:
+        tuple: Predicted class labels and their corresponding probabilities.
+    """
     if isinstance(texts, str):
         texts = [texts]
 
@@ -86,6 +151,16 @@ def predict_with_bert(texts, session, tokenizer, label_encoder, max_len=128):
     return decoded_preds, probs
 
 def clean_and_convert(df, column_names):
+    """
+    Cleans and converts specified DataFrame columns to numeric types.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+        column_names (List[str]): Names of columns to clean and convert.
+
+    Returns:
+        pd.DataFrame: Cleaned and converted DataFrame.
+    """
     for col in column_names:
         # Remove extra spaces, unexpected characters, or convert malformed values
         df[col] = df[col].str.replace(r'\D', '', regex=True)  # Remove non-digit characters, if applicable
@@ -94,6 +169,12 @@ def clean_and_convert(df, column_names):
 
 
 def load_reports():
+    """
+    Loads model performance reports for XGBoost and BERT from an Excel file.
+
+    Returns:
+        tuple: Two pandas DataFrames containing performance metrics for XGBoost and BERT.
+    """
     file_path = os.path.join("model","model_reports.xlsx")
 
     xgb_report = pd.read_excel(file_path, sheet_name="XGBoost")
@@ -118,6 +199,16 @@ def load_reports():
     return xgb_report, bert_report
 
 def display_comparison(xgb_report, bert_report):
+    """
+    Displays a side-by-side comparison of XGBoost and BERT model performance using Streamlit.
+
+    Args:
+        xgb_report (pd.DataFrame): Performance metrics for XGBoost.
+        bert_report (pd.DataFrame): Performance metrics for BERT.
+
+    Returns:
+        None
+    """
     st.write("### Model Performance Comparison (XGBoost vs BERT)")
 
     # Merge the reports on the "Class" column to show a side-by-side comparison
@@ -143,13 +234,18 @@ def display_comparison(xgb_report, bert_report):
     st.plotly_chart(fig)
 
 def display_auc_roc():
+    """
+    Displays ROC-AUC curve images for BERT and XGBoost models using Streamlit.
+
+    Returns:
+        None
+    """
     # Paths to the AUC PNGs
     bert_path = os.path.join("roc_curve", "ROC_AUC_BERT.png")
     xgb_path = os.path.join("roc_curve", "ROC_AUC_XGBoost.png")
 
     auc_images = [bert_path, xgb_path]
 
-    # Create two columns in Streamlit
     col1, col2 = st.columns(2)
     
     # Display the first image with a heading in the first column
@@ -158,7 +254,6 @@ def display_auc_roc():
         img = Image.open(auc_images[0])
         st.image(img, use_container_width=True)
     
-    # Display the second image with a heading in the second column
     with col2:
         st.header("XGBoost ROC Curve")
         img = Image.open(auc_images[1])
@@ -166,6 +261,18 @@ def display_auc_roc():
 
 
 def create_gauge(title, value, max_value, color):
+    """
+    Creates a Plotly gauge chart to visualize a metric.
+
+    Args:
+        title (str): Title of the gauge.
+        value (float): Current value to be displayed.
+        max_value (float): Maximum value for the gauge axis.
+        color (str): Color of the gauge bar.
+
+    Returns:
+        plotly.graph_objects.Figure: Configured gauge chart.
+    """
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=value,
@@ -184,6 +291,12 @@ def create_gauge(title, value, max_value, color):
     return fig
 
 def display_speedometers():
+    """
+    Displays gauge charts for accuracy and average F1-score of XGBoost and BERT models using Streamlit.
+
+    Returns:
+        None
+    """
     st.header("Model Performance Speedometers")
 
     col1, col2 = st.columns(2)

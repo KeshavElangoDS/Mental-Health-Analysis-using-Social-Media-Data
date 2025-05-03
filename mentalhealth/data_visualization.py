@@ -1,6 +1,20 @@
 """
-"""
+data_visualization.py : Module for visualizing and analyzing text data from a dataframe.
 
+This module includes functions for plotting various types of data visualizations, such as:
+- Post count distribution across subreddits.
+- Post lengths by target variable.
+- Word cloud generation from text data.
+- ROC curve plotting for multiclass classification models.
+
+The module utilizes libraries such as Matplotlib, Seaborn, Plotly, and WordCloud for generating visualizations.
+
+Functions:
+    - plot_post_counts_by_subreddit: Plots the distribution of post counts across subreddits.
+    - plot_post_lengths_by_target: Plots post lengths grouped by target variable.
+    - generate_wordcloud: Creates and displays a word cloud based on text data.
+    - plot_roc_curve_multiclass: Plots the ROC curve for multiclass classification using the One-vs-Rest strategy.
+"""
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
@@ -95,7 +109,6 @@ def plot_roc_curve_multiclass(y_test, ypred, classifier_name, target_names):
     n_classes = len(np.unique(y_test))
     y_test_bin = label_binarize(y_test, classes=np.unique(y_test))
     
-    # Initialize dictionaries to store the ROC curve values for each class
     fpr, tpr, roc_auc = {}, {}, {}
     
     # Compute the ROC curve for each class

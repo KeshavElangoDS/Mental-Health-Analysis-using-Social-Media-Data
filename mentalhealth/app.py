@@ -23,6 +23,13 @@ Run the script directly to launch the Streamlit app:
     $ poetry run streamlit run mentalhealth/app.py
 
 """
+import os
+import sys
+
+# Add the project root directory (where 'mentalhealth/' lives) to PYTHONPATH
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -31,7 +38,7 @@ import sys
 import torch
 from PIL import Image
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 st.set_page_config(layout="wide", page_title=" Mental Health Text Classifier")
 

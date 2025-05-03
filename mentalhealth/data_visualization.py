@@ -39,6 +39,13 @@ def plot_post_counts_by_subreddit(data, column='subreddit', figsize=(15, 8)):
     Returns:
     None
     """
+    if data.empty:
+        print("DataFrame is empty. No plot to display.")
+        return
+
+    if column not in data.columns:
+        raise KeyError(f"Column '{column}' does not exist in the DataFrame.")
+    
     plt.figure(figsize=figsize)
     sns.countplot(data=data, y=column)
     plt.title(f'Post counts across {column}s')
@@ -60,6 +67,13 @@ def plot_post_lengths_by_target(data, x_column='post_length', y_column='target',
     Returns:
     None
     """
+    if data.empty:
+        print("DataFrame is empty. No plot to display.")
+        return
+
+    if x_column not in data.columns or y_column not in data.columns:
+        raise ValueError(f"Columns {x_column} and/or {y_column} are not present in the data.")
+
     plt.figure(figsize=figsize)
     sns.barplot(x=x_column, y=y_column, hue=y_column, data=data, palette=palette)
     plt.title(f'Post Lengths for Each {y_column.capitalize()}')
@@ -81,6 +95,13 @@ def generate_wordcloud(dataframe, text_column, width=800, height=400, background
     Returns:
     - A word cloud image displayed using matplotlib.
     """
+    if dataframe.empty:
+        print("DataFrame is empty. No word cloud to display.")
+        return
+
+    if text_column not in dataframe.columns:
+        raise KeyError(f"Column '{text_column}' does not exist in the DataFrame.")
+
     combined_text = " ".join(dataframe[text_column])
     
     wordcloud = WordCloud(

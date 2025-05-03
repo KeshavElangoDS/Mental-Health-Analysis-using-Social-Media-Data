@@ -75,13 +75,20 @@ def clean_text(text):
         clean_text("Check out @username's profile! Visit http://example.com #coolstuff")
         # Returns: "check out @user s profile visit user coolstuff"
     """
-    text = re.sub(r"http\S+|www\S+", "", text)
-    text = re.sub(r"@\w+", "@user", text)
-    text = re.sub(r"#\w+", "", text)
-    text = re.sub(r"\s+", " ", text)
-    text = re.sub(r"[^a-zA-Z0-9\s]", "", text)
-    return text.strip().lower()
+    # Remove URLs (http, https, and www)
+    url_pattern = r'https?://\S+|www\.\S+'
+    text_without_urls = re.sub(url_pattern, '', text)
+    
+    # Retain the @ symbol and remove numbers
+    text = re.sub(r'@([a-zA-Z]+)\d*', r'@\1', text_without_urls)
 
+    # Remove hashtags (#hashtag)
+    text = re.sub(r'#\S+', '', text)
+    text = re.sub(r'\s+', ' ', text)
+    
+    # Remove non-alphanumeric characters (except spaces)
+    text = re.sub(r'[^a-zA-Z0-9\s@]', '', text)
+    return text.strip().lower()
 
 class LightningTextClassifier(pl.LightningModule):
     """

@@ -18,7 +18,11 @@ import os
 import re
 
 
-def load_and_combine_dataset(data_folder: str):
+from pathlib import Path
+import os
+import pandas as pd
+
+def load_and_combine_dataset(data_folder: str) -> pd.DataFrame:
     """
     Loads and combines CSV files from a specified folder, extracting only the first four columns from each file.
 
@@ -30,8 +34,8 @@ def load_and_combine_dataset(data_folder: str):
         
     Notes:
         Assumes all CSV files in the provided folder are structured similarly and contain at least four columns.
+        Returns an empty DataFrame if no CSV files are found.
     """
-
     current_working_folder = Path.cwd()
     current_folder_abs = os.path.abspath(current_working_folder)
 
@@ -40,16 +44,18 @@ def load_and_combine_dataset(data_folder: str):
 
     data_frames = []
 
-    #extract the first 4 columns
     for file in csv_files:
         file_path = os.path.join(data_folder_path, file)
         df = pd.read_csv(file_path)
         df_first_four_columns = df.iloc[:, :4]
         data_frames.append(df_first_four_columns)
 
-    mental_health_df = pd.concat(data_frames, ignore_index=True)
+    if not data_frames:
+        return pd.DataFrame()
 
+    mental_health_df = pd.concat(data_frames, ignore_index=True)
     return mental_health_df
+
 
 def label_mental_health_subreddits(mental_health_df: pd.DataFrame):
     """

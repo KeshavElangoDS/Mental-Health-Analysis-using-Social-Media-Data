@@ -20,7 +20,7 @@ Modules imported include:
 Usage:
 ------
 Run the script directly to launch the Streamlit app:
-    $ poetry run streamlit run mental_health_dashboard/app.py
+    $ poetry run streamlit run mentalhealth/app.py
 
 """
 import streamlit as st
